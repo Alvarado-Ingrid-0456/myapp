@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "125797901924",
+    "project_id": "papeleria-cometa",
+    "storage_bucket": "papeleria-cometa.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:125797901924:android:805620d4ebfb85e2e12171",
+        "android_client_info": {
+          "package_name": "com.example.myapp"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyDpGifDSPwi2Jte9CpYNuphcSQ59jnGDV4"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
