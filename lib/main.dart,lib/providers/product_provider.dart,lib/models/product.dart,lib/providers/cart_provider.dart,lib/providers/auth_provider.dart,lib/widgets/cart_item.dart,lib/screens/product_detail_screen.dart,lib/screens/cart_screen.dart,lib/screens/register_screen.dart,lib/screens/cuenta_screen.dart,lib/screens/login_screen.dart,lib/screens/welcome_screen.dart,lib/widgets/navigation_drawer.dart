@@ -663,7 +663,7 @@ class _CartScreenState extends State<CartScreen> {
             onPressed: () {
               // Only navigate to payment if the cart has items
               if (cart.itemCount > 0) {
-                // Use pushReplacementNamed to navigate and replace the current CartScreen from the stack
+                // Use pushReplacementNamed to navigate and remove the current CartScreen from the stack
                 Navigator.of(context).pushReplacementNamed('/payment');
               } else {
                 // Show a message if the cart is empty
@@ -907,7 +907,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
                 // Email input field
                 TextFormField(
                   controller: _emailController,
-                  keyboardType: TextInputType.emailAddress, // Use email keyboard
+                  keyboardType: TextInputType.emailAddress, // Set keyboard type for email
                   decoration: InputDecoration(
                     labelText: 'Correo Electrónico',
                     prefixIcon: const Icon(Icons.email_outlined, color: Colors.teal),

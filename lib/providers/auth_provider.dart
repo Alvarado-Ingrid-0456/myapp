@@ -1,86 +1,67 @@
+
 import 'package:flutter/material.dart';
-import 'package:firebase_auth/firebase_auth.dart'; // Assuming Firebase Auth is used
+import 'package:firebase_auth/firebase_auth.dart' as firebase_auth;
 
 class AuthProvider with ChangeNotifier {
-  final FirebaseAuth _firebaseAuth = FirebaseAuth.instance;
-  User? _user;
+  firebase_auth.User? _user;
 
-  User? get user => _user;
+  firebase_auth.User? get user => _user;
 
   AuthProvider() {
-    _firebaseAuth.authStateChanges().listen(_onAuthStateChanged);
-  }
-
-  Future<void> _onAuthStateChanged(User? firebaseUser) async {
-    if (firebaseUser == null) {
-      _user = null;
-    } else {
+    firebase_auth.FirebaseAuth.instance.authStateChanges().listen((firebaseUser) {
       _user = firebaseUser;
-      // You might want to fetch additional user data from Firestore here
-    }
-    notifyListeners();
+      notifyListeners();
+    });
   }
 
-  Future<void> register(String name, String email, String password) async {
+  Future<void> register({required String email, required String password}) async {
     try {
-      // Create user with email and password
-      final credential = await _firebaseAuth.createUserWithEmailAndPassword(
+      final credential = await firebase_auth.FirebaseAuth.instance.createUserWithEmailAndPassword(
         email: email,
         password: password,
       );
-
-      // Update user's display name
-      await credential.user?.updateDisplayName(name);
-
-      // Refresh user object to get the updated display name
-      await credential.user?.reload();
-      _user = _firebaseAuth.currentUser;
-
-      // Optional: Store additional user data in Firestore
-      // await FirebaseFirestore.instance.collection('users').doc(_user!.uid).set({
-      //   'name': name,
-      //   'email': email,
-      //   'createdAt': FieldValue.serverTimestamp(),
-      // });
-
+      _user = credential.user;
       notifyListeners();
-    } on FirebaseAuthException catch (e) {
-      // Handle specific Firebase Auth exceptions
-      throw Exception(e.message ?? 'Registration failed. Please try again.');
-    } catch (e) {
-      // Handle other potential errors
-      throw Exception('An unexpected error occurred during registration.');
+    } on firebase_auth.FirebaseAuthException catch (e) {
+      throw Exception(e.message ?? 'Registration failed');
     }
   }
 
-  Future<void> login(String email, String password) async {
+  Future<void> login({required String email, required String password}) async {
     try {
-      await _firebaseAuth.signInWithEmailAndPassword(
+      final credential = await firebase_auth.FirebaseAuth.instance.signInWithEmailAndPassword(
         email: email,
         password: password,
       );
-      _user = _firebaseAuth.currentUser;
+      _user = credential.user;
       notifyListeners();
-    } on FirebaseAuthException catch (e) {
-      throw Exception(
-          e.message ?? 'Login failed. Please check your credentials.');
-    } catch (e) {
-      throw Exception('An unexpected error occurred during login.');
+    } on firebase_auth.FirebaseAuthException catch (e) {
+      throw Exception(e.message ?? 'Login failed');
     }
   }
 
   Future<void> logout() async {
+    await firebase_auth.FirebaseAuth.instance.signOut();
+    _user = null;
+    notifyListeners();
+  }
+
+  Future<void> forgotPassword(String email) async {
     try {
-      await _firebaseAuth.signOut();
-      _user = null;
-      notifyListeners();
-    } catch (e) {
-      throw Exception('Logout failed. Please try again.');
+      await firebase_auth.FirebaseAuth.instance.sendPasswordResetEmail(email: email);
+      debugPrint('Password reset email sent to $email');
+    } on firebase_auth.FirebaseAuthException catch (e) {
+      throw Exception(e.message ?? 'Failed to send password reset email.');
     }
   }
 
-  // Method to check if the user is logged in
-  bool isAuthenticated() {
-    return _user != null;
+  Future<void> signInWithGoogle() async {
+    // TODO: Implement actual Google Sign-In logic here using Firebase Auth and Google Sign-In plugin
+    debugPrint("Google Sign-In not implemented yet.");
+  }
+
+  Future<void> signInWithFacebook() async {
+    // TODO: Implement actual Facebook Sign-In logic here using Firebase Auth and Facebook Login plugin
+    debugPrint("Facebook Sign-In not implemented yet.");
   }
 }

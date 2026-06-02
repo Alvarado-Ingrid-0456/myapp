@@ -1,154 +1,91 @@
+
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:myapp/providers/product_provider.dart';
 import 'package:myapp/providers/cart_provider.dart';
 
-class ProductDetailScreen extends StatefulWidget {
-  // The product ID is passed as an argument when navigating to this screen
-  // final String productId;
-  // const ProductDetailScreen({super.key, required this.productId});
+class ProductDetailScreen extends StatelessWidget {
+  static const routeName = '/product-detail';
 
   const ProductDetailScreen({super.key});
 
   @override
-  State<ProductDetailScreen> createState() => _ProductDetailScreenState();
-}
-
-class _ProductDetailScreenState extends State<ProductDetailScreen> {
-  @override
   Widget build(BuildContext context) {
-    // Retrieve the product ID passed as an argument
-    final productId = ModalRoute.of(context)?.settings.arguments as String;
+    final productId = ModalRoute.of(context)?.settings.arguments as String?;
+    if (productId == null) {
+      return const Scaffold(
+        body: Center(child: Text('ID de producto no encontrado.')),
+      );
+    }
 
-    // Access ProductProvider to find the product details using the ID
-    // We use 'read' here because we only need to get the product data, not listen for changes.
-    final productProvider =
-        Provider.of<ProductProvider>(context, listen: false);
-    final loadedProduct =
-        productProvider.items.firstWhere((prod) => prod.id == productId);
+    final product = Provider.of<ProductProvider>(context, listen: false).findById(productId);
 
-    // Access CartProvider to add the product to the cart
-    final cartProvider = Provider.of<CartProvider>(context, listen: false);
+    if (product == null) {
+      return const Scaffold(
+        body: Center(child: Text('Producto no encontrado.')),
+      );
+    }
 
     return Scaffold(
-      appBar: AppBar(
-        title: Text(loadedProduct.title),
-        centerTitle: true,
-        actions: <Widget>[
-          IconButton(
-            icon: const Icon(Icons.shopping_cart),
-            tooltip: 'Ver Carrito',
-            onPressed: () {
-              Navigator.of(context)
-                  .pushNamed('/cart'); // Navigate to the cart screen
-            },
-          ),
-        ],
-      ),
+      appBar: AppBar(title: Text(product.title)),
       body: SingleChildScrollView(
         child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
           children: <Widget>[
-            // Product Image
-            Container(
-              margin: const EdgeInsets.symmetric(vertical: 10, horizontal: 20),
+            SizedBox(
+              height: 300,
               width: double.infinity,
-              height: 250,
               child: Image.network(
-                loadedProduct.imageUrl,
+                product.imageUrl,
                 fit: BoxFit.cover,
-                errorBuilder: (context, error, stackTrace) => const Icon(
-                    Icons.broken_image,
-                    size: 100), // Handle image loading errors
+                errorBuilder: (context, error, stackTrace) => const Center(child: Icon(Icons.broken_image, size: 100)),
               ),
             ),
-            const SizedBox(height: 10),
-
-            // Product Title and Price
+            const SizedBox(height: 20),
             Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 20.0),
-              child: Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  Expanded(
-                    child: Text(
-                      loadedProduct.title,
-                      style: Theme.of(context)
-                          .textTheme
-                          .headlineSmall
-                          ?.copyWith(fontWeight: FontWeight.bold),
-                      overflow: TextOverflow.ellipsis,
+              padding: const EdgeInsets.symmetric(horizontal: 20),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: <Widget>[
+                  Text(
+                    product.title,
+                    style: Theme.of(context).textTheme.headlineSmall?.copyWith(fontWeight: FontWeight.bold),
+                  ),
+                  const SizedBox(height: 10),
+                  Text(
+                    '\$${product.price.toStringAsFixed(2)}',
+                    style: Theme.of(context).textTheme.titleLarge?.copyWith(color: Colors.grey.shade700),
+                  ),
+                  const SizedBox(height: 15),
+                  Text(
+                    product.description,
+                    style: Theme.of(context).textTheme.bodyMedium?.copyWith(height: 1.5),
+                  ),
+                  const SizedBox(height: 20),
+                  Center(
+                    child: ElevatedButton.icon(
+                      icon: const Icon(Icons.shopping_cart),
+                      label: const Text('Añadir al Carrito'),
+                      onPressed: () {
+                        Provider.of<CartProvider>(context, listen: false).addItem(
+                          productId: product.id,
+                          price: product.price,
+                          title: product.title,
+                          imageUrl: product.imageUrl,
+                        );
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          const SnackBar(
+                            content: Text('¡Añadido al carrito!'),
+                            duration: Duration(seconds: 2),
+                          ),
+                        );
+                      },
                     ),
                   ),
-                  Text(
-                    '\$${loadedProduct.price.toStringAsFixed(2)}',
-                    style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                          color: Theme.of(context).primaryColor,
-                          fontWeight: FontWeight.bold,
-                        ),
-                  ),
+                  const SizedBox(height: 20),
                 ],
               ),
             ),
-            const SizedBox(height: 10),
-
-            // Product Description
-            Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 20.0),
-              child: Text(
-                loadedProduct.description,
-                textAlign: TextAlign.justify,
-                style: Theme.of(context)
-                    .textTheme
-                    .bodyLarge
-                    ?.copyWith(fontSize: 16),
-                softWrap: true,
-              ),
-            ),
-            const SizedBox(height: 30),
-
-            // Add to Cart Button
-            Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 20.0),
-              child: ElevatedButton.icon(
-                icon: const Icon(Icons.add_shopping_cart),
-                label: const Text('Agregar al Carrito',
-                    style: TextStyle(fontSize: 16)),
-                onPressed: () {
-                  // Call addItem with product details as positional arguments
-                  cartProvider.addItem(
-                    loadedProduct.id,
-                    loadedProduct.title,
-                    loadedProduct.price,
-                    loadedProduct.imageUrl,
-                  );
-                  // Show confirmation snackbar
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    SnackBar(
-                      content:
-                          Text('"${loadedProduct.title}" agregado al carrito.'),
-                      duration: const Duration(seconds: 2),
-                      action: SnackBarAction(
-                        label: 'Ver Carrito',
-                        onPressed: () {
-                          Navigator.of(context).pushNamed('/cart');
-                        },
-                      ),
-                    ),
-                  );
-                },
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: Theme.of(context)
-                      .primaryColor, // Use primary color for button background
-                  foregroundColor: Colors.white, // Use white for text color
-                  padding:
-                      const EdgeInsets.symmetric(horizontal: 30, vertical: 12),
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(10.0),
-                  ),
-                ),
-              ),
-            ),
-            const SizedBox(height: 30), // Add some bottom spacing
           ],
         ),
       ),
